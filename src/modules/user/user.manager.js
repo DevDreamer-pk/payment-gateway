@@ -2,7 +2,10 @@ import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { URLSearchParams } from "url";
+
 import paymentModel from "../../config/paymentModel.js";
+import transactionModel from "../../config/transactionModel.js";
+
 export default class UserManager {
   async payment(userData, res) {
     try {
@@ -127,6 +130,51 @@ export default class UserManager {
       console.log("Manager Error", error);
       throw error;
     }
+  }
+
+  async createTransaction(body) {
+    try {
+      const {orderId, customerName, customerId, email, phone, amount, merchantId } = body;
+      if (!orderId || !customerName || !customerId || !email || !phone || !amount || !merchantId) {
+          return { success: false, data: "All fields are required" };
+        }
+      
+        // check if order Id is unique 
+        
+        const existingOrder = await transactionModel.findOne({ orderId: orderId });
+        if (existingOrder) {
+          return { success: false, data: "Order ID must be unique" };
+        }
+
+        const transactionId = uuidv4();
+
+        const newTransaction = new transactionModel({
+          orderId: orderId,
+          customerName: customerName,
+          customerId: customerId,
+          email: email,
+          phone: phone,
+          amount: amount,
+          status: "pending",
+          transactionId: transactionId,
+          merchantId: merchantId
+        });
+
+        await newTransaction.save();
+
+        const transactionData = {
+          orderId: orderId,
+          transactionId: transactionId,
+          customerId: customerId,
+          amount: amount,
+          status: "pending",
+        };
+        
+        return { success: true, data: transactionData };
+      } catch (error) {
+        console.log("Manager Error", error);
+        throw error;
+      }
   }
 }
 

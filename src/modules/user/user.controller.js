@@ -39,4 +39,18 @@ export default class UserController {
       res.status(500).send(error);
     }
   }
+
+  async createTransaction(req, res) {
+    try {
+      const result = await new userManager().createTransaction(req.body);
+      if (result.success == false) {
+        res.status(500).send(result);
+      } else {
+        res.status(201).send(result);
+      }
+    } catch (error) {
+      console.log("Controller Error", error);
+      res.status(500).send(error);
+    }
+  }
 }
